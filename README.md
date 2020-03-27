@@ -1,4 +1,4 @@
-[lc5415.github.io/Covid19EDA](lc5145.github.io/Covid19EDA)
+[https://lc5415.github.io/COVID19/](https://lc5415.github.io/COVID19/)
 
 ## Welcome to GitHub Pages
 
