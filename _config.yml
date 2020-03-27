@@ -1,6 +1,5 @@
 theme:jekyll-theme-leap-day
 name: "Luis Chaves"
-output_dir: "."
 navbar:
   title: "Luis Chaves"
   left:
