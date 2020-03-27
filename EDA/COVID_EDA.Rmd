@@ -1,0 +1,196 @@
+---
+title: "COVID EDA"
+author: "Luis Chaves"
+date: "23/03/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning = F, message = F}
+library(here)
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+library(treemapify)
+curr.dir = here()
+knitr::opts_knit$set(root.dir = curr.dir)
+knitr::opts_knit$get()$root.dir
+```
+
+## Up-to-date exploration by date
+
+```{r}
+up.to.date = read.csv("NovelCOVID/covid_19_data.csv")
+up.to.date$Active = up.to.date$Confirmed - up.to.date$Deaths-up.to.date$Recovered
+countryToContinent = read.csv("Countries-Continents.csv")
+countryToContinent = rbind(countryToContinent, cbind(Continent = c(rep("Asia",5),rep("Europe",2)),
+                                                     Country = c("Hong Kong", "Mainland China",
+                                                              "Macau", "Taiwan","South Korea",
+                                                                 "UK", "Czech Republic")))
+countryToContinent$Continent = as.character(countryToContinent$Continent)
+countryToContinent$Country = as.character(countryToContinent$Country)
+```
+
+```{r}
+up.to.date = merge(up.to.date, countryToContinent, by.x = "Country.Region", by.y = "Country", all.x = T, sort = F)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+sum.table = up.to.date %>% 
+select(-c(Last.Update, SNo, ObservationDate)) %>% 
+group_by(Continent, Country.Region, Province.State) %>%
+summarise(Confirmed = max(Confirmed), Deaths = max(Deaths), #using max because data is cumulative
+          Recovered = max(Recovered), Active = max(Active)) %>% arrange(-Active)
+knitr::kable(sum.table %>% head(20))
+```
+
+```{r}
+plot1 = ggplotly(sum.table %>% 
+mutate(Province.State = ifelse(Province.State == "",
+                               as.character(Country.Region), 
+                               as.character(Province.State))) %>% select(-Active) %>% 
+head(20) %>%
+pivot_longer(-c(Country.Region, Province.State, Continent), names_to = "Metric", values_to = "Amount") %>%
+ggplot(aes(x = reorder(Province.State, Amount), y = Amount, fill = Continent))+
+geom_col(color = 'black')+
+facet_wrap(~Metric)+coord_flip()+theme_minimal())
+plot1
+```
+```{r}
+plot2 = ggplotly(sum.table %>% 
+mutate(Province.State = ifelse(Province.State == "",
+                               as.character(Country.Region), 
+                               as.character(Province.State))) %>% select(-Active) %>%
+head(20) %>%
+pivot_longer(-c(Country.Region, Province.State, Continent), names_to = "Metric", values_to = "Amount") %>%
+ggplot(aes(x = reorder(Province.State, Amount), y = Amount))+
+geom_col(aes(fill = Metric), position = "identity")+coord_flip()+theme_minimal())
+plot2
+```
+
+```{r}
+sum.table %>% 
+mutate(Province.State = ifelse(Province.State == "",
+                               as.character(Country.Region), 
+                               as.character(Province.State))) %>% 
+select(-Active) %>%
+head(10)%>% 
+ggplot(aes(area = Deaths, label = paste0(Province.State,":\n",Deaths),
+           fill = Continent, subgroup = Continent))+geom_treemap()+
+  geom_treemap_text(colour = "white", place = "topleft")+coord_fixed()+
+ggtitle("Number of deaths by country\nin top 10 countries with more active cases")
+```
+
+### Number of confirmed cases in top 10 regions with most active cases
+
+```{r}
+sum.table %>% 
+mutate(Province.State = ifelse(Province.State == "",
+                               as.character(Country.Region), 
+                               as.character(Province.State))) %>% 
+head(10)%>% 
+ggplot(aes(area = Confirmed, label = paste0(Province.State,":\n",Confirmed),
+           fill = Continent,subgroup = Continent))+geom_treemap()+
+  geom_treemap_text(colour = "white", place = "topleft")+coord_fixed()+
+ggtitle("Number of confirmed cases by country\nin top 10 countries with more active cases")
+```
+
+```{r}
+sum.table = sum.table %>% mutate(Province.State = ifelse(Province.State == "",
+                               as.character(Country.Region), 
+                               as.character(Province.State))) 
+
+df.plotly = sum.table
+df.plotly$Continent = ifelse(is.na(df.plotly$Continent), "Missing", df.plotly$Continent)
+
+conts = df.plotly %>% group_by(Continent) %>% summarise(Deaths = sum(Deaths),
+                                                        Confirmed = sum(Confirmed),
+                                                        Recovered = sum(Recovered),
+                                                        Active = sum(Active)) %>%
+  mutate(parent = "") %>% rename(labels = Continent)
+
+countrs = df.plotly %>% group_by(Country.Region) %>% 
+  summarise(Deaths = sum(Deaths),Confirmed = sum(Confirmed),
+            Recovered = sum(Recovered),Active = sum(Active), 
+            parent = unique(Continent)) %>%  rename(labels = Country.Region)
+
+regs = df.plotly %>% ungroup() %>% select(-Continent) %>% rename(labels = Province.State, parent = Country.Region)
+regs = regs[,c(2,3,4,5,6,1)]
+```
+
+
+```{r}
+df.plotly = rbind(conts, countrs)
+```
+
+
+```{r}
+toPlot = df.plotly %>% filter(Active > 100)
+
+plot4 <- plot_ly(
+  type="treemap",
+  values=toPlot$Deaths,
+  labels = toPlot$labels,
+  parents= toPlot$parent
+ # textinfo="label+value+percent parent+percent entry+percent root",
+  #domain=list(column=0)
+)
+plot4
+```
+
+```{r}
+plot4 <- plot_ly(
+  type="treemap",
+  values=toPlot$Confirmed,
+  labels = toPlot$labels,
+  parents= toPlot$parent
+ # textinfo="label+value+percent parent+percent entry+percent root",
+  #domain=list(column=0)
+)
+plot4
+```
+
+```{r}
+plot4 <- plot_ly(
+  type="treemap",
+  values=toPlot$Recovered,
+  labels = toPlot$labels,
+  parents= toPlot$parent
+ # textinfo="label+value+percent parent+percent entry+percent root",
+  #domain=list(column=0)
+)
+plot4
+```
+
+
+```{r}
+plot4 <- plot_ly(
+  type="treemap",
+  values=toPlot$Deaths/toPlot$Confirmed,
+  labels = toPlot$labels,
+  parents= toPlot$parent
+ # textinfo="label+value+percent parent+percent entry+percent root",
+  #domain=list(column=0)
+)
+plot4
+```
+
+```{r}
+plot4 <- plot_ly(
+  type="treemap",
+  values=toPlot$Recovered/toPlot$Confirmed,
+  labels = toPlot$labels,
+  parents= toPlot$parent
+ # textinfo="label+value+percent parent+percent entry+percent root",
+  #domain=list(column=0)
+)
+plot4
+```
+
