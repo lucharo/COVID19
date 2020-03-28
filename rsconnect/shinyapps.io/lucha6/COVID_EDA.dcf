@@ -1,0 +1,13 @@
+name: COVID_EDA
+title: COVID_EDA
+username:
+account: lucha6
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2011265
+bundleId: 2935890
+url: https://lucha6.shinyapps.io/COVID_EDA/
+when: 1585396781.87311
+asMultiple: FALSE
+asStatic: TRUE
+ignoredFiles: COVID_EDA.html|Exploration.ipynb|getData.sh|novel-corona-virus-2019-dataset.zip|.ipynb_checkpoints/Exploration-checkpoint.ipynb

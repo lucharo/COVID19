@@ -2,10 +2,12 @@
 title: "Corona-virus exploratory data analysis"
 author: "Luis Chaves"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+runtime: shiny
 output:
   html_document:
     toc: TRUE
     toc_float: TRUE
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -13,32 +15,36 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r, warning = F, message = F}
-library(here)
 library(ggplot2)
 library(plotly)
 library(tidyverse)
 library(treemapify)
 library(utils)
-curr.dir = paste0(here(), "/EDA/")
-knitr::opts_knit$set(root.dir = curr.dir)
+library(here)
+library(shiny)
+curr.dir = paste0(here::here(), "/EDA/")
+print(curr.dir)
+# knitr::opts_knit$set(root.dir = curr.dir)
 ```
 
 ```{r}
-up.to.date = read.csv("NovelCOVID/covid_19_data.csv")
+# up.to.date = read.csv(paste0(curr.dir,"NovelCOVID/covid_19_data.csv"))
+up.to.date = read.csv("./NovelCOVID/covid_19_data.csv")
 up.to.date$Active = up.to.date$Confirmed - up.to.date$Deaths-up.to.date$Recovered
 
 ```
 
 ```{r countrcontinet}
+# countryToContinent = read.csv(paste0(curr.dir,"Countries-Continents.csv"))
 countryToContinent = read.csv("Countries-Continents.csv")
 countryToContinent = rbind(countryToContinent, 
                            cbind(Continent = c(rep("Asia",5),rep("Europe",2), "Africa"),
                                  Country = c("Hong Kong", "Mainland China", "Macau",
-                                             "Taiwan","South Korea", "UK", "Czech Republic", "Burkina Faso")))
+                                             "Taiwan","South Korea", "UK",
+                                             "Czech Republic", "Burkina Faso")))
 countryToContinent$Continent = as.character(countryToContinent$Continent)
 countryToContinent$Country = as.character(countryToContinent$Country)
 ```
-
 
 
 ```{r}
@@ -47,7 +53,15 @@ up.to.date = merge(up.to.date, countryToContinent, by.x = "Country.Region", by.y
 
 # Up-to-date numbers by continent and by country
 
-You can also embed plots, for example:
+```{r}
+knitr::kable(
+  up.to.date %>% 
+select(-c(Last.Update, SNo, ObservationDate)) %>% 
+group_by(Country.Region) %>%
+summarise(Confirmed = max(Confirmed), Deaths = max(Deaths), #using max because data is cumulative
+          Recovered = max(Recovered), Active = max(Active)) %>% arrange(-Active) %>% head(20)
+)
+```
 
 ```{r}
 sum.table = up.to.date %>% 
@@ -57,6 +71,16 @@ summarise(Confirmed = max(Confirmed), Deaths = max(Deaths), #using max because d
           Recovered = max(Recovered), Active = max(Active)) %>% arrange(-Active)
 knitr::kable(sum.table %>% head(20))
 ```
+
+```{r}
+knitr::kable(up.to.date %>% 
+select(-c(Last.Update, SNo, ObservationDate)) %>% 
+group_by(Continent) %>%
+summarise(Confirmed = max(Confirmed), Deaths = max(Deaths), #using max because data is cumulative
+          Recovered = max(Recovered), Active = max(Active)) %>% arrange(-Active) %>% head(20))
+```
+
+
 
 ```{r}
 plot1 = ggplotly(sum.table %>% 
@@ -87,8 +111,8 @@ ggplot(aes(x = reorder(Province.State, Amount), y = Amount))+
 geom_col(aes(fill = Metric), position = "identity")+coord_flip()+theme_minimal())
 plot2
 ```
-### Number of confirmed cases in top 10 regions with most active cases
 
+### Number of confirmed cases in top 10 regions with most active cases
 
 ```{r}
 sum.table = sum.table %>% mutate(Province.State = ifelse(Province.State == "",
@@ -96,7 +120,7 @@ sum.table = sum.table %>% mutate(Province.State = ifelse(Province.State == "",
                                as.character(Province.State))) 
 
 df.plotly = sum.table
-df.plotly$Continent = ifelse(is.na(df.plotly$Continent), "Missing", df.plotly$Continent)
+df.plotly$Continent = ifelse(is.na(df.plotly$Continent), "Other", df.plotly$Continent)
 
 conts = df.plotly %>% group_by(Continent) %>% summarise(Deaths = sum(Deaths),
                                                         Confirmed = sum(Confirmed),
@@ -121,12 +145,13 @@ world = data.frame(labels = "World", Deaths = sum(conts$Deaths),
 df.plotly = rbind(conts, countrs, world)
 ```
 
-## Number of deaths
 
 ```{r}
-toPlot = df.plotly %>% filter(Active > 100)
-
-plot4 <- plot_ly(
+# add filter to line below if you'd like to filter by anything
+# e.g. df.plotly  %>% filter(Active > 1000)
+toPlot = df.plotly
+## Number of deaths
+deads <- plot_ly(
   type="treemap",
   values=toPlot$Deaths,
   labels = toPlot$labels,
@@ -135,13 +160,11 @@ plot4 <- plot_ly(
  # textinfo="label+value+percent parent+percent entry+percent root",
   #domain=list(column=0)
 )
-plot4
 ```
 
-## Number of confirmed
-
 ```{r}
-plot4 <- plot_ly(
+## Number of confirmed
+conf <- plot_ly(
   type="treemap",
   values=toPlot$Confirmed,
   labels = toPlot$labels,
@@ -150,12 +173,12 @@ plot4 <- plot_ly(
   # textinfo="label+value+percent parent+percent root"
   #domain=list(column=0)
 )
-plot4
 ```
 
-## Number of recovered
+
 ```{r}
-plot4 <- plot_ly(
+## Number of recovered
+rec <- plot_ly(
   type="treemap",
   values=toPlot$Recovered,
   labels = toPlot$labels,
@@ -163,14 +186,11 @@ plot4 <- plot_ly(
   hoverinfo="label+value+percent parent+percent root"
   #domain=list(column=0)
 )
-plot4
 ```
 
-## Case-Fatality Rate by Country
-
-In this graph we can clearly see how the virus (and potentially different strains of the virus) are affecting every country. As of today, Italy has a case-fatality rate (CFR) of `r round(with(sum.table[sum.table$Country.Region == "Italy",], Deaths/Confirmed),4)*100`% where as Germany has a CFR of `r round(with(sum.table[sum.table$Country.Region == "Germany",], Deaths/Confirmed),4)*100`% suggesting the strain in Germany is way less deadly than the italian strain.
 ```{r}
-plot4 <- plot_ly(
+## Case-Fatality Rate by Country
+deaths.conf <- plot_ly(
   type="treemap",
   values=round(toPlot$Deaths/toPlot$Confirmed,4)*100,
   labels = toPlot$labels,
@@ -179,13 +199,11 @@ plot4 <- plot_ly(
   hovertext = "Potato"
   #domain=list(column=0)
 )
-plot4
 ```
 
-## Ratio of recovered-to-confirmed cases
-
 ```{r}
-plot4 <- plot_ly(
+## Ratio of recovered-to-confirmed cases
+rec.conf <- plot_ly(
   type="treemap",
   values=toPlot$Recovered/toPlot$Confirmed,
   labels = toPlot$labels,
@@ -193,18 +211,58 @@ plot4 <- plot_ly(
  # textinfo="label+value+percent parent+percent entry+percent root",
   #domain=list(column=0)
 )
-plot4
 ```
+
+```{r}
+selectInput("t.choice", label = "Event/Metric",
+              choices = c("Deaths(D)", "Recovered(R)","Confirmed(C)",
+                          "D/C ratio", "R/C ratio", "Active(A)"), selected = "Deaths(D)")
+```
+
+```{r}
+ItalyDC = round(with(sum.table[sum.table$Country.Region == "Italy",], Deaths/Confirmed),4)*100
+GermanyDC = round(with(sum.table[sum.table$Country.Region == "Germany",], Deaths/Confirmed),4)*100
+```
+
+## Up-to-date number of events by location
+
+```{r}
+renderText(
+  if (input$t.choice=="D/C ratio"){
+    paste0("In this graph we can clearly see how the virus (and potentially different strains of the virus) are affecting every country. As of today, Italy has a case-fatality rate (CFR) of ", as.character(ItalyDC), "% where as Germany has a CFR of ", as.character(GermanyDC), "% suggesting the strain in Germany is way less deadly than the italian strain.")
+  }
+)
+```
+
+
+```{r}
+renderPlotly(
+  if (input$t.choice == "Deaths(D)"){
+  deads
+} else if (input$t.choice == "Confirmed(C)") {
+  conf
+} else if (input$t.choice == "Recovered(R)") {
+  rec
+} else if (input$t.choice == "D/C ratio") {
+  deaths.conf
+} else if (input$t.choice == "R/C ratio") {
+  rec.conf
+}  else if (input$t.choice == "Active(A)") {
+  
+}
+)
+```
+
 
 # COVID19 over time - Timelines
 
-```{r}
+```{r message = F, warning = F}
 library(lubridate)
 ```
 
 
 ```{r}
-rm(list = ls())
+# rm(list = ls()[ls() %in% "curr.dir"])
 deaths.time = read.csv("NovelCOVID/time_series_covid_19_deaths.csv")
 confirmed.time = read.csv("NovelCOVID/time_series_covid_19_confirmed.csv")
 recovered.time = read.csv("NovelCOVID/time_series_covid_19_recovered.csv")
@@ -228,6 +286,7 @@ recovered.time = TimeByCountry(recovered.time)
 ```
 
 ```{r}
+# countryToContinent = read.csv(paste0(curr.dir,"Countries-Continents.csv"))
 countryToContinent = read.csv("Countries-Continents.csv")
 countryToContinent = rbind(countryToContinent, 
                            cbind(Continent = c(rep("Asia",5),rep("Europe",2), "Africa"),
@@ -261,7 +320,7 @@ all.time$Date = as.Date(sapply(strsplit(all.time$Date, "X"), "[[",2), format = "
 ```
 
 ```{r deathsOverTime}
-ggplotly(all.time %>% filter(Metric == "Deaths") %>% 
+plt.deaths.time = ggplotly(all.time %>% filter(Metric == "Deaths") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -270,7 +329,7 @@ ggplotly(all.time %>% filter(Metric == "Deaths") %>%
 ```
 
 ```{r casesOverTime}
-ggplotly(all.time %>% filter(Metric == "Confirmed") %>% 
+plt.conf.time = ggplotly(all.time %>% filter(Metric == "Confirmed") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -280,7 +339,7 @@ ggplotly(all.time %>% filter(Metric == "Confirmed") %>%
 ```
 
 ```{r recoveredOverTime}
-ggplotly(all.time %>% filter(Metric == "Recovered") %>% 
+plt.rec.time = ggplotly(all.time %>% filter(Metric == "Recovered") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -288,9 +347,10 @@ ggplotly(all.time %>% filter(Metric == "Recovered") %>%
   )
 ```
 
-## Cumulative number of active cases
+
 ```{r}
-ggplotly(all.time %>% pivot_wider(names_from = Metric, values_from = Amount) %>% 
+## Cumulative number of active cases
+plt.act.time = ggplotly(all.time %>% pivot_wider(names_from = Metric, values_from = Amount) %>% 
            mutate(Active = Confirmed-Recovered-Deaths) %>%  
   ggplot(aes(x = Date, y = Active,
              color = Continent, group = Country))+
@@ -299,10 +359,31 @@ ggplotly(all.time %>% pivot_wider(names_from = Metric, values_from = Amount) %>%
   )
 ```
 
+## Cumulative number of events over time
 
-## Number of reported cases per day
 ```{r}
-rm(list = ls())
+selectInput("plt.time.choice", label = "Event/Metric",
+              choices = c("Deaths(D)", "Recovered(R)",
+                          "Confirmed(C)", "Active(A)"), selected = 20)
+```
+
+```{r}
+renderPlotly(
+  if (input$plt.time.choice == "Deaths(D)"){
+  plt.deaths.time
+} else if (input$plt.time.choice == "Confirmed(C)") {
+  plt.conf.time
+} else if (input$plt.time.choice == "Recovered(R)") {
+  plt.rec.time
+}  else if (input$plt.time.choice == "Active(A)") {
+  plt.act.time
+}
+  )
+```
+
+## Number of events per day over time
+```{r}
+# rm(list = ls()[ls() %in% "curr.dir"])
 deaths.time = read.csv("NovelCOVID/time_series_covid_19_deaths.csv")
 confirmed.time = read.csv("NovelCOVID/time_series_covid_19_confirmed.csv")
 recovered.time = read.csv("NovelCOVID/time_series_covid_19_recovered.csv")
@@ -379,7 +460,7 @@ all.per.day$Date = as.Date(sapply(strsplit(all.per.day$Date, "X"), "[[",2), form
 ```
 
 ```{r deathsPerDayOverTime}
-ggplotly(all.per.day %>% filter(Metric == "Deaths") %>% 
+d.daytime = ggplotly(all.per.day %>% filter(Metric == "Deaths") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -388,7 +469,7 @@ ggplotly(all.per.day %>% filter(Metric == "Deaths") %>%
 ```
 
 ```{r casesPerDayOverTime}
-ggplotly(all.per.day %>% filter(Metric == "Confirmed") %>% 
+conf.daytime = ggplotly(all.per.day %>% filter(Metric == "Confirmed") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -398,7 +479,7 @@ ggplotly(all.per.day %>% filter(Metric == "Confirmed") %>%
 ```
 
 ```{r recoveredPerDayOverTime}
-ggplotly(all.per.day %>% filter(Metric == "Recovered") %>% 
+rec.daytime = ggplotly(all.per.day %>% filter(Metric == "Recovered") %>% 
   ggplot(aes(x = Date, y = Amount,
              color = Continent, group = Country))+
     geom_line()+theme_minimal()+scale_color_brewer(palette = "Paired")+
@@ -406,11 +487,21 @@ ggplotly(all.per.day %>% filter(Metric == "Recovered") %>%
   )
 ```
 
-
-
-
-
-
-
+```{r}
+renderPlotly(
+  if (input$plt.time.choice == "Deaths(D)"){
+  d.daytime
+} else if (input$plt.time.choice == "Confirmed(C)") {
+  conf.daytime
+} else if (input$plt.time.choice == "Recovered(R)") {
+  rec.daytime
+}
+  )
+```
 
 # COVID19 over space - Maps
+
+```{r}
+
+```
+
