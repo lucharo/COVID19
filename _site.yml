@@ -3,10 +3,12 @@ output_dir: "."
 navbar:
   title: "Luis Chaves"
   left:
+    - text: "About"
+      href: about.html
     - text: "Exploratory Data Analysis"
-      href: EDA/COVID_EDA.html
+      href: EDA.html
     - text: "Systems Virology"
-      href: omics.html
+      href: about.html
   right:
     - icon: fa-envelope fa-lg
       href: contact.html

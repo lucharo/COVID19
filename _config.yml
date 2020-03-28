@@ -1,10 +1,12 @@
-theme:jekyll-theme-leap-day
 name: "Luis Chaves"
+title: "lucha6 personal website"
 navbar:
   title: "Luis Chaves"
   left:
+    - text: "About"
+      href: about.html
     - text: "Exploratory Data Analysis"
-      href: EDA/COVID_EDA.html
+      href: EDA.html
     - text: "Systems Virology"
       href: omics.html
   right:
@@ -14,3 +16,7 @@ navbar:
       href: http://github.com/lc5415
     - icon: fa-linkedin fa-lg
       href: https://www.linkedin.com/in/lucha6/
+output:
+  html_document:
+    theme: jekyll-theme-leap-day
+    css: 'styles.css'
