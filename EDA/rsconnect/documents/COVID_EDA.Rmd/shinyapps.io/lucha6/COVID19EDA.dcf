@@ -1,0 +1,10 @@
+name: COVID19EDA
+title: COVID19EDA
+username:
+account: lucha6
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2020540
+bundleId: 2945806
+url: https://lucha6.shinyapps.io/COVID19EDA/
+when: 1585601086.40542
