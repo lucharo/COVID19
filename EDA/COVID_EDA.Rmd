@@ -29,7 +29,7 @@ curr.dir = paste0(here::here(), "/EDA/")
 
 # Introduction
 
-__Last updated at: __`r lubridate::now()`
+**Last updated at:** `r lubridate::now()` UK TIME
 
 Hello and thanks for visiting my page on COVID19 exploratory data analysis. I have made this site as a learning exercise but also to better understand the current state of the pandemic at multiple levels.
 
