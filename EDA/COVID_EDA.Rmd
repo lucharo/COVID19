@@ -25,11 +25,12 @@ library(shiny)
 curr.dir = paste0(here::here(), "/EDA/")
 # print(curr.dir)
 # knitr::opts_knit$set(root.dir = curr.dir)
+LastRunTime = readRDS("ProcessedData/LastRunTime.rds")
 ```
 
 # Introduction
 
-**Last updated at:** `r lubridate::now()` UK TIME
+**Last updated:** `r LastRunTime` UK TIME
 
 Hello and thanks for visiting my page on COVID19 exploratory data analysis. I have made this site as a learning exercise but also to better understand the current state of the pandemic at multiple levels.
 

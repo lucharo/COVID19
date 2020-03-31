@@ -1,8 +1,0 @@
----
----
-
-<link rel="stylesheet" href="styles.css" type="text/css">
-
-I like __biology__ and I like __computers__.
-
-I also really like __learning__, __open-source projects__ and the vast amount of __knowledge__ there is available __on the internet__.

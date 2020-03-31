@@ -5,6 +5,6 @@ account: lucha6
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2020540
-bundleId: 2945806
+bundleId: 2951290
 url: https://lucha6.shinyapps.io/COVID19EDA/
-when: 1585601086.40542
+when: 1585694689.44074

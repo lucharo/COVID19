@@ -330,3 +330,7 @@ if (gif){
             animate(toAnimate(anim_table_summary.reco), fps = 15,duration = 30, end_pause = 10))
   print("GIF 3 done.")
 }
+
+time = lubridate::now()+3600 # time seems to be off by an hour when I call it from terminal
+saveRDS(time, "ProcessedData/LastRunTime.rds")
+
