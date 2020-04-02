@@ -7,6 +7,8 @@ output:
   html_document:
     toc: TRUE
     toc_float: TRUE
+resource_files: 
+  - ProcessedData/* # some files from this folder are not being found by rmarkdown::find_external_resources
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +27,7 @@ library(shiny)
 curr.dir = paste0(here::here(), "/EDA/")
 # print(curr.dir)
 # knitr::opts_knit$set(root.dir = curr.dir)
-LastRunTime = readRDS("ProcessedData/LastRunTime.rds")
+LastRunTime = readRDS("ProcessedData/LastRunTime.RDS")
 ```
 
 # Introduction
@@ -67,8 +69,8 @@ selectInput("table", label = "By",
 ```
 
 ```{r warning = F, message = F}
-sum.table = readRDS("ProcessedData/sumtable.rds")
-continent.wise =  readRDS("ProcessedData/continentWise.rds")
+sum.table = readRDS("ProcessedData/sumtable.RDS")
+continent.wise =  readRDS("ProcessedData/continentWise.RDS")
 ```
 
 ```{r}
@@ -86,7 +88,7 @@ renderTable(
 ```{r}
 # add filter to line below if you'd like to filter by anything
 # e.g. df.plotly  %>% filter(Active > 1000)
-toPlot = readRDS("ProcessedData/df_plotly.rds")
+toPlot = readRDS("ProcessedData/df_plotly.RDS")
 ## Number of deaths
 deads <- plot_ly(
   type="treemap",
@@ -181,7 +183,7 @@ renderPlotly(
 # COVID19 over time - Timelines
 
 ```{r}
-all.time = readRDS("ProcessedData/cleanTime.rds")
+all.time = readRDS("ProcessedData/cleanTime.RDS")
 ```
 
 ```{r}
@@ -249,7 +251,7 @@ renderPlotly(
 
 ## Number of events per day over time
 ```{r}
-all.per.day = readRDS("ProcessedData/allPerDay.rds")
+all.per.day = readRDS("ProcessedData/allPerDay.RDS")
 ```
 
 ```{r}
@@ -367,7 +369,8 @@ facet1 =  forSubplot %>% filter(Metric=="Confirmed") %>%
 facet2 =  forSubplot %>% filter(Metric=="Recovered") %>% 
   plot_ly(y = ~Country, x = ~Amount, frame = ~Date,color = ~Continent,
           type = "bar",showlegend = F) %>%
-  layout(yaxis = list(title = "", showticklabels = F),
+  layout(
+    # yaxis = list(title = "", showticklabels = F),
          xaxis = list(title = "Recoveries",
                       range = c(0,max(forSubplot$Amount[forSubplot$Metric == "Recovered"]))
          )) 
@@ -375,13 +378,14 @@ facet2 =  forSubplot %>% filter(Metric=="Recovered") %>%
 facet3 =  forSubplot %>% filter(Metric=="Deaths") %>% 
   plot_ly(y = ~Country, x = ~Amount, frame = ~Date,color = ~Continent,
           type = "bar",showlegend = F) %>%
-  layout(yaxis = list(title = "", showticklabels = F),
+  layout(
+    # yaxis = list(title = "", showticklabels = F),
          xaxis = list(title = "Deaths", range = c(0,max(forSubplot$Amount[forSubplot$Metric == "Deaths"]))))
 
 byevent = suppressWarnings(
   subplot(facet1, facet3, facet2, 
           titleX = T, nrows = 1,
-          titleY = T) %>%  animation_slider(
+          titleY = T, shareY = T) %>%  animation_slider(
             currentvalue = list(
               prefix = paste0("Days from ",
                               min(all.time$Date),": ")))

@@ -63,8 +63,8 @@ continent.wise = up.to.date %>%
   summarise(Confirmed = sum(Confirmed), Deaths = sum(Deaths), #using max because data is cumulative
             Recovered = sum(Recovered), Active = sum(Active)) %>% arrange(-Active) %>% head(20)
 
-saveRDS(sum.table, "ProcessedData/sumtable.rds")
-saveRDS(continent.wise, "ProcessedData/continentWise.rds")
+saveRDS(sum.table, "ProcessedData/sumtable.RDS")
+saveRDS(continent.wise, "ProcessedData/continentWise.RDS")
 
 
 ### TREEMAP CODE #####
@@ -96,7 +96,7 @@ world = data.frame(labels = "World", Deaths = sum(conts$Deaths),
                    Active = sum(conts$Active), parent = "")
 
 df.plotly = rbind(conts, countrs, world)
-saveRDS(df.plotly, "ProcessedData/df_plotly.rds")
+saveRDS(df.plotly, "ProcessedData/df_plotly.RDS")
 
 ### Timeline data data engineer #####
 
@@ -150,7 +150,7 @@ all.time = rbind(deaths.time, confirmed.time, recovered.time)
 # from Sys.Date() I believe the preferred date format is YYYY-MM-DD
 all.time$Date = as.Date(sapply(strsplit(all.time$Date, "X"), "[[",2), format = "%m.%d.%y")
 
-saveRDS(all.time, "ProcessedData/cleanTime.rds")
+saveRDS(all.time, "ProcessedData/cleanTime.RDS")
 
 
 ### Per day over time####
@@ -221,7 +221,7 @@ all.per.day = rbind(deaths.per.day, confirmed.per.day, recovered.per.day)
 # from Sys.Date() I believe the preferred date format is YYYY-MM-DD
 all.per.day$Date = as.Date(sapply(strsplit(all.per.day$Date, "X"), "[[",2), format = "%m.%d.%y")
 
-saveRDS(all.per.day, "ProcessedData/allPerDay.rds")
+saveRDS(all.per.day, "ProcessedData/allPerDay.RDS")
 
 
 ### Barpltos over time ####
@@ -332,5 +332,5 @@ if (gif){
 }
 
 time = lubridate::now()+3600 # time seems to be off by an hour when I call it from terminal
-saveRDS(time, "ProcessedData/LastRunTime.rds")
+saveRDS(time, "ProcessedData/LastRunTime.RDS")
 
