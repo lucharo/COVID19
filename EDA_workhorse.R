@@ -587,7 +587,7 @@ all.time.geo = all.time.geo %>% select(-Continent) %>% filter(!is.na(Metric)) %>
   pivot_wider(names_from = "Metric", values_from = "Amount") %>%
   mutate(Date=as.numeric(Date-min(Date, na.rm = T)))
 
-saveRDS(all.time.geo, 'data.rds')
+write.csv(all.time.geo, 'data.csv')
 
 l <- list(color = toRGB("grey"), width = 0.5)
 
