@@ -7,8 +7,8 @@ output:
   html_document:
     toc: true
 theme: united
-#resource_files: 
-# - ProcessedData/* # some files from this folder are not being found by rmarkdown::find_external_resources
+resource_files: 
+ - Plots/*.gif # gif are not in in-code blocks hence cannnot be found
 ---
 
 ```{r setup, include=FALSE}
