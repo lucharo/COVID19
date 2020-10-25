@@ -1,6 +1,7 @@
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(lubridate))
 suppressPackageStartupMessages(library(tidyr))
+
 # Up to date table ----------------------------------------------------------
 
 up.to.date = read.csv("RawData/covid_19_data.csv")
@@ -101,8 +102,6 @@ saveRDS(all.per.day, "ProcessedData/allPerDay.rds")
 
 
 # all across time ---------------------------------------------------------
-
-
 
 deaths.time = deaths.time %>% pivot_longer(-c(Country,Continent), names_to = "Date", values_to = "Amount") %>% mutate(Metric = "Deaths")
 confirmed.time = confirmed.time %>% pivot_longer(-c(Country,Continent), names_to = "Date", values_to = "Amount") %>% mutate(Metric = "Confirmed")
