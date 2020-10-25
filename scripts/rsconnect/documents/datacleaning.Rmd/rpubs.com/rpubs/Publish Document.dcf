@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/681474/fcb25818501044b2bd22b968c5351646
+bundleId: https://api.rpubs.com/api/v1/document/681474/fcb25818501044b2bd22b968c5351646
+url: http://rpubs.com/lucha6/681474
+when: 1603664319.7694

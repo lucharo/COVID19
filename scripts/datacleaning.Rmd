@@ -1,0 +1,134 @@
+---
+title: "COVID-19 Data Cleaning"
+author: "Luis Chaves"
+date: "2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, fig.align = 'center')
+```
+
+# Note - Data Source
+
+In a [previous effort](https://rpubs.com/lucha6/covid-cleaning-bad-data), I used the [John Hopkins University Data]() as my main source. Upon discovering several artefacts in the data such as COVID19 resurrections and other unexplained anomalies I decided to switch my data source to [Our World in Data (OWiD)](https://github.com/owid/covid-19-data/tree/master/public/data).
+
+## Load useful libraries
+
+```{r}
+library(dplyr)
+```
+
+
+## Download data
+
+We download the data via the raw URL of where the `.csv` file sits in the OWiD Github repo.
+```{r}
+covid = read.csv('https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv')
+```
+
+```{r}
+## save local copy
+write.csv(covid, '../owid-data.csv')
+```
+
+
+A quick look into the structure of the data shows us that the data is quite rich and many features have already been pre-computed. We won't need many of these features for our simple dashboard:
+
+```{r}
+str(covid)
+```
+
+We see that the table consists of day-wise and country-wise features. For example, the human development index is only computed every few years and is hence a country-wise feature. Other features such as the `new_deaths` are day-wise features in the sense that they reflect the number of daily cases at any given day in any given country. __We__ are interested in cumulative events (deaths, confirmed cases, recoveries, number of tests) and daily events, hence we will make one table for each use case. 
+
+First of all we will select only the column that are useful to us (country identifier such as name or ISO code are useful, especially for maps):
+```{r}
+covid = covid %>% 
+  select(iso_code,
+         continent,
+         location,
+         date,
+         total_cases,
+         new_cases,
+         total_deaths,
+         new_deaths,
+         total_tests,
+         new_tests
+         )
+```
+
+Before moving on, we will also change the `date` column from character type to __Date__ type:
+```{r}
+covid$date = as.Date(covid$date)
+```
+
+_Note:_ We actually won't use tests data as it has been very sparsely collected, see it for yourself in the chart below.
+
+```{r}
+library(naniar)
+vis_miss(covid %>% arrange(date) %>% select(contains(c('total','new'))))
+```
+As you can see above roughly 62% of testing data is missing, where as data missingness for confirmed cases has been in average below 6.88% and missingness for deaths has been below 23.84%.
+```{r}
+covid = covid %>% select(-contains('tests'))
+```
+
+
+Now we split our data into `cumulative` and `daily`
+```{r}
+## this line selects all columns from covid except those that contain
+## the word new
+cumulative = covid %>% select(-contains('new'))
+
+daily = covid %>% select(-contains('total'))
+```
+
+Using the JHU data source, we observed negative daily cases and negative deaths (see first section)[#note-data-source]. For our peace of mind we will check if this data has such artefacts.
+
+```{r}
+any(daily$new_cases < 0)
+```
+
+```{r}
+any(daily$new_deaths < 0)
+```
+
+At this point, I could freak out (LOL) but I won't. Someone pointed at [the issue of negative cases and deaths in the OWiD repository](https://github.com/owid/covid-19-data/issues/66). A collaborator from the OWiD team described how this is actually due to countries overestimating their death toll and sending an update to entities such as the European Center for Disease Control (ECDC) at later dates. Not much can be done about this. At this point I decided to go ahead with using the OWiD data as it is very clean and it is regularly maintained by a professional team. Also the open issue count in the OWiD repo (8 at time of reading) is more encouraging than that of the JHU repo (1305 at the time of reading).
+
+## Plots for diagnostics
+
+```{r}
+library(ggplot2)
+daily %>% 
+  filter(iso_code == 'ESP') %>%
+  ggplot(aes(x = date,y = new_cases))+
+  geom_point(color = 'red')+
+  ggtitle('Spain\'s Daily COVID cases')
+```
+Data collector do not control and often do not seem to know how nations report statistics. Spain seems to be chunk reports of daily cases every few days hence the rapidly fluctuating number of daily confirmed cases during the 2nd wave of the pandemic.
+
+```{r}
+daily %>% 
+  filter(iso_code == 'GBR') %>%
+  ggplot(aes(x = date,y = new_cases))+
+  geom_point(color = 'darkblue')+
+  ggtitle('UK Daily Confirmed Cases')
+```
+```{r}
+cumulative %>% 
+  filter(iso_code == 'GBR') %>%
+  ggplot(aes(x = date,y = total_deaths))+
+  geom_point(color = 'darkgreen')+
+  ggtitle('Italy\'s Cumulative Confirmed Cases')+
+  ylab('Total number of confirmed cases (log10 scale)')
+```
+
+## Save data
+
+The OWiD data is extremely useful and little to no data cleaning was needed (in comparison to [the cleaning of the JHU data](https://rpubs.com/lucha6/covid-cleaning-bad-data)).
+
+```{r}
+saveRDS(daily, '../ProcessedData/daily.rds')
+saveRDS(cumulative, '../ProcessedData/cumulative.rds')
+```
+
