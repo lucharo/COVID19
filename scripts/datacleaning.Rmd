@@ -122,6 +122,15 @@ cumulative %>%
   ggtitle('Italy\'s Cumulative Confirmed Cases')+
   ylab('Total number of confirmed cases (log10 scale)')
 ```
+## Remove entries that do not have a continent
+
+A pre-existing row for `World` and `International` COVID19 events. As we want to illustrate the aggregation of this data at the continent and World level we will remove these rows.
+
+```{r}
+daily = daily %>% filter(continent != '')
+cumulative = cumulative %>% filter(continent != '')
+```
+
 
 ## Save data
 
