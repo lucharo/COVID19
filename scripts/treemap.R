@@ -67,7 +67,7 @@ saveRDS(treemap_deaths, 'Plots/treemap_deaths.rds')
 # Number of confirmed cases -----------------------------------------------
 treemap_cases <- plot_ly(
   type="treemap",
-  values=treemap_df$Confirmed,
+  values=treemap_df$Cases,
   labels = treemap_df$labels,
   parents= treemap_df$parent,
   hoverinfo="value+percent parent+percent root") %>%

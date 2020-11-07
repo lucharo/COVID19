@@ -1,226 +1,178 @@
 ---
-title: "Corona-virus Exploratory Data Analysis"
+title: "Coronavirus Exploratory Data Analysis"
 author: "Luis Chaves"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: 'Last updated: `r file.info("Plots")$mtime`'
 runtime: shiny
 output: 
   html_document:
     toc: true
+    code_folding: hide
 theme: united
 resource_files: 
- - Plots/*.gif # gif are not in in-code blocks hence cannnot be found
+  - Plots/
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warnings = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = T,warnings = FALSE, message = FALSE)
 ```
 
-```{r, warning = F, message = F}
-library(ggplot2)
-library(plotly)
-library(tidyverse)
-library(utils)
-library(lubridate)
-library(htmlwidgets)
-library(crosstalk)
-library(shiny)
-curr.dir = paste0(here::here())
-# print(curr.dir)
-# knitr::opts_knit$set(root.dir = curr.dir)
-LastRunTime = readRDS("ProcessedData/LastRunTime.rds")
+### Load necessary libraries
+
+We simply need 3 libraries as most of our scripts ran offline.
+```{r}
+library(shiny) ## for UI
+library(plotly) ## for renderPlotly function
+library(leaflet) ## for renderLeaflet function
 ```
 
 # Introduction
 
-**Last updated:** `r LastRunTime` UK TIME
+## Greetings
 
-Hello and thanks for visiting my page on COVID19 exploratory data analysis. I have made this site as a learning exercise but also to better understand the current state of the pandemic at multiple levels.
+You may come from my Medium series on creating an interactive report or you may note. Either way I hope you can learn from this notebook!
 
-There are many more plots and perspective I would like to exploit and that I am currently working on:
+## Load data
 
-* Bubble map over time and by exact location
-* Graph of the reproduction number (R0) over time
-* Graphs of the global statistics
-* Log10 switch for the amounts of people tested positive, dead or recovered
-* Give context and explanations to the graphics
+First we need to load our plots that we created with the various scripts (Treemaps, line plots and a map). We could alternatively compute the plots at runtime but that will likely result in a slower load time, annoying the reader of our Shiny document. Because we saved all of our plots (including the Leaflet maps) as RDS objects we can load them all using a single loop instead of having to list them all.
 
-If you have any other suggestions please get in touch at [luis.chaves15@imperial.ac.uk](mailto:luis.chaves15@imperial.ac.uk).
-
-Data sources:
-
-* [Corona Virus dataset @ Kaggle](https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-dataset)
-
-Some amazing resources:
-
-* [John Hopkins University dashboard](https://coronavirus.jhu.edu/map.html)
-* [SARS-COV2 phylogenetic tree](https://nextstrain.org/ncov)
-* [COVID19 scenario explorer](https://neherlab.org/covid19/)
-
-_**Disclaimer:**_ This is the first website project I get involved in so things may not work as smoothly as I would want them too! If you encounter the site being too laggy, do let me know! I am working to make it be smoother and take less time to load.
-
-_**Disclaimer 2:**_ The whole website is interactive! Have fun playing with the graphs!
-
-```{r LoadData}
-bar_over_time = readRDS("Plots/bar_over_time.rds")
-byevent = readRDS("Plots/byevent.rds")
-conf_daytime = readRDS("Plots/conf_daytime.rds")
-conf = readRDS("Plots/conf.rds")
-d_daytime = readRDS("Plots/d_daytime.rds")
-deads = readRDS("Plots/deads.rds")
-deaths_conf = readRDS("Plots/deaths_conf.rds")
-map_time = readRDS("Plots/map_time.rds")
-plt_act_time = readRDS("Plots/plt_act_time.rds")
-plt_conf_time = readRDS("Plots/plt_conf_time.rds")
-plt_deaths_time = readRDS("Plots/plt_deaths_time.rds")
-plt_rec_time = readRDS("Plots/plt_rec_time.rds")
-rec_conf = readRDS("Plots/rec_conf.rds")
-rec_daytime = readRDS("Plots/rec_daytime.rds")
-rec = readRDS("Plots/rec.rds")
-
-all_time = readRDS('ProcessedData/cleanTime.rds')
+```{r LoadPlots}
+## Iterate through all the files under the Plots directory
+for (file in list.files("Plots/")){
+  # assign each file to a variable with the same name as the file
+  # but without the file extension. Equivalent to:
+  # filename = load(filename.filextension)
+  assign(x = strsplit(file, '\\.')[[1]][1],
+         value = readRDS(paste0("Plots/",file)))
+}
 ```
 
-# Up-to-date numbers by continent and by country
+# Main Plots
 
-## Table view
-```{r}
-selectInput("table", label = "By",
-            choices = c("Continent", "Country","Full"), selected = "Country")
+Now that we have loaded the plots, we simply need to design the Shiny UI, which is composed of an input element and of rendering functions that react to the changes in the input.
+
+## Treemap Charts
+
+An input block looks like this:
+
+```{r class.source="fold-show"}
+treemap_input = selectInput(inputId = "treemap_choice",
+                            label = "Event/Metric",
+                            choices = c("Deaths(D)", "Confirmed(C)", "Fataily-Case Ratio"),
+                            selected = "Deaths(D)")
 ```
 
-```{r warning = F, message = F}
-sum.table = readRDS("ProcessedData/sumtable.rds")
-continent.wise =  readRDS("ProcessedData/continentWise.rds")
-```
+The first argument is the input handle which __Shiny__ is going to use to refer to this input. Next is the label of this input handle (`label`) which will appear right above the handle, then the possible choices (`choices`) and finally the default choice (`selected`). Other input handling function exist, such as: `fileInput()`, `dateInput()`, `sliderInput()`, `checkboxInput()` and others.
+
+Once, we got the input handling function ready, we just need a `render*()` function that handles the input, such as `renderPlotly()`, `renderImage()`, `renderText()` or others. Here we will use `renderPlotly()`
 
 ```{r}
-renderTable(
-  switch(input$table,
-         "Country"=sum.table %>% head(20),
-         "Continent"=continent.wise,
-         "Full"=sum.table),
-  digits = 0
-)
+treemap_input ## <-- this calls the input handlers and displays them
 ```
 
-## Up-to-date number of events by location
 
-```{r}
-selectInput("t.choice", label = "Event/Metric",
-            choices = c("Deaths(D)", "Recovered(R)","Confirmed(C)",
-                        "D/C ratio", "R/C ratio"), selected = "Deaths(D)")
-```
-
-```{r}
-ItalyDC = round(with(sum.table[sum.table$Country.Region == "Italy",], Deaths/Confirmed),4)*100
-GermanyDC = round(with(sum.table[sum.table$Country.Region == "Germany",], Deaths/Confirmed),4)*100
-```
-
-```{r}
-renderText(
-  if (input$t.choice=="D/C ratio"){
-    paste0("In this graph we can clearly see how the virus (and potentially different strains of the virus) are affecting every country. As of today, Italy has a case-fatality rate (CFR) of ", as.character(ItalyDC), "% where as Germany has a CFR of ", as.character(GermanyDC), "% suggesting the strain in Germany is way less deadly than the italian strain.")
+```{r class.source="fold-show"}
+renderPlotly(
+  if (input$treemap_choice == "Deaths(D)"){
+    treemap_deaths
+  } else if (input$treemap_choice == "Confirmed(C)") {
+    treemap_cases
+  } else if (input$treemap_choice == "Fataily-Case Ratio") {
+    treemap_deaths_by_cases
   }
 )
 ```
 
+__Now, it's just play and repeat!__
+
+## Line plots 
+
+### Cumulative and Daily number of events over time
+
+We can also open a new _Input_ handling function when a parent _Input_ function returns a certain value. The line plots offer a great example to do this: we can have a handle for Daily/Cumulative, another for Country/Continent, another one for Deaths/Cases and a final one to enable log10 scale. First we are going to define our input handlers:
+
+```{r class.source="fold-show"}
+line_geo = selectInput(inputId = "line_choice_geography",
+                       label = "Geography",
+                       choices = c("Country", "Continent"),
+                       selected = "Continent")
+
+line_mode = selectInput(inputId = "line_choice_mode",
+                        label = "Mode",
+                        choices = c("Daily", "Cumulative"),
+                        selected = "Cumulative")
+
+line_event = selectInput(inputId = "line_choice_event",
+                         label = "Event",
+                         choices = c("Death", "Cases"),
+                         selected = "Cases")
+line_log10 = checkboxInput('line_log10', 'log10 scale', value = FALSE)
+```
+
+Once, we got the input handling function ready, we just need a `render*()` function that handles the input, such as `renderPlotly()`, `renderImage()`, `renderText()` or others. Here we are going to take advantage of the fact that our plot names are standardised to make the logic more concise(see below).
+
+| **Continent plots**                       | **Country plots**                 |
+|-------------------------------------------|-----------------------------------|
+| `plotly_cases_time_continent`             | `plotly_cases_time_country`       |
+| `plotly_cases_time_continent_daily`       | `plotly_cases_time_country_daily` |
+| `plotly_deaths_time_continent`            | `plotly_deaths_time_country`      |
+| `plotly_deaths_time_continent_daily`      | `plotly_deaths_time_country_daily`|
+| `plotly_cases_time_continent_log10`       | *Not created*                     |
+| `plotly_cases_time_continent_log10_daily` | *Not created*                     |
+| `plotly_deaths_time_continent_log10`      | *Not created*                     |
+| `plotly_deaths_time_continent_log10_daily`| *Not created*                     |
+
+
+Depending on the inputs, we are going to build a string corresponding to one of the plot names using the `ifelse()` function. The logic for the geography choice is even more special because if __"Continent"__ is chosen we will create a checkbox to enable log10 scale. To do this we use what;s called a conditional panel as seen in the next code chunk, additionally we are going to wrap all of our input handlers in side an `inputPanel()` which will make them look very good and tidy.
 
 ```{r}
-renderPlotly(
-  if (input$t.choice == "Deaths(D)"){
-    deads
-  } else if (input$t.choice == "Confirmed(C)") {
-    conf
-  } else if (input$t.choice == "Recovered(R)") {
-    rec
-  } else if (input$t.choice == "D/C ratio") {
-    deaths_conf
-  } else if (input$t.choice == "R/C ratio") {
-    rec_conf
+inputPanel(
+  line_event,
+  line_mode,
+  line_geo,
+  conditionalPanel('input.line_choice_geography == "Continent"', line_log10)
+)
+```
+
+
+```{r}
+renderPlotly({
+  event = ifelse(input$line_choice_event == 'Cases', 'cases', 'deaths')
+  mode = ifelse(input$line_choice_mode == 'Daily', '_daily', '')
+  
+  if(input$line_choice_geography == 'Country') {
+    geography = 'country'
+    log10 = ''
+  } else {
+    geography = 'continent'
+    log10 = ifelse(input$line_log10, '_log10', '')
   }
+  # build string
+  chosen_plot = paste0('plotly_', event, '_time_',geography,log10, mode)
+  # parse and evaluate content of the string
+  eval(parse(text = chosen_plot)) 
+}
 )
 ```
 
-# COVID19 over time - Timelines
+You may sometimes find negative daily count of cases or deaths for a certain country. This turns out to be a not-so-rare artefact where a country may have overestimated their number of cases/deaths on a given date and rectifies at a later date what its actual numbers are.
 
-## Cumulative number of events over time
+## COVID19 over space - Maps
 
-```{r}
-selectInput("plt.time.choice", label = "Event/Metric",
-            choices = c("Deaths(D)", "Recovered(R)",
-                        "Confirmed(C)", "Active(A)"), selected = 20)
-```
+We done some pretty neat job with the previous Shiny UI. The last one is simple, we'll make use of the `renderLeaflet()` function this time. 
+This map reflect the number of cases/deaths in each country by `r Sys.Date()`.
 
 ```{r}
-renderPlotly(
-  if (input$plt.time.choice == "Deaths(D)"){
-    plt_deaths_time
-  } else if (input$plt.time.choice == "Confirmed(C)") {
-    plt_conf_time
-  } else if (input$plt.time.choice == "Recovered(R)") {
-    plt_rec_time
-  }  else if (input$plt.time.choice == "Active(A)") {
-    plt_act_time
-  }
-)
-```
+selectInput('map', 
+            label = 'Event',
+            choices = c('Deaths', 'Cases'),
+            selected = 'Cases')
 
-## Number of events per day over time
-
-The value for any day is the difference of the cumulative cases/deaths/recoveries for that day day and the day before then.
-
-```{r}
-selectInput("plt.day.choice", label = "Event/Metric",
-            choices = c("Deaths(D)", "Recovered(R)",
-                        "Confirmed(C)"), selected = 20)
+renderLeaflet({
+  if(input$map == 'Deaths'){mapdeaths} else {mapcases} 
+})
 ```
 
 
-```{r}
-renderPlotly(
-  if (input$plt.day.choice == "Deaths(D)"){
-    d_daytime
-  } else if (input$plt.day.choice == "Confirmed(C)") {
-    conf_daytime
-  } else if (input$plt.day.choice == "Recovered(R)") {
-    rec_daytime
-  }
-)
-```
+# Appendix - Extra plots
 
-## Barplots over time
-
-Over time from `r format(min(all_time$Date),"%B %dnd")` to  `r format(max(all_time$Date),"%B %dnd")`
-
-```{r message = F}
-selectInput("barplot", label = "Type of barplot",
-            choices = c("Stacked bars", "By event"), selected = "Stacked bars")
-
-renderPlotly(
-  switch(input$barplot,
-         "Stacked bars" = bar_over_time,
-         "By event" = byevent)
-)
-```
-
-## Race plots
-
-### Confirmed cases
-![](Plots/confirmed.gif)
-
-### Deaths
-![](Plots/deaths.gif)
-
-### Recovered
-![](Plots/recovered.gif)
-
-
-# COVID19 over space - Maps
-
-
-```{r}
-map_time
-```
-
-
-
+One day I may decide to fill this.

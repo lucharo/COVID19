@@ -29,7 +29,8 @@ cumulative = cumulative %>%
   group_by(location, iso_code) %>%
   summarise(total_cases = total_cases[date==max(date)],
             total_deaths = total_deaths[date==max(date)]) %>% 
-  ungroup()
+  ungroup() %>%
+  filter(!is.na(total_cases))
 
 agg = countries
 ## perform right join to keep all countries available in the cumulative
@@ -63,21 +64,11 @@ leaf_map  = leaflet(agg,
   )  %>% addLegend(pal = pal,
                    values = ~log10(total_cases),
                    opacity = 1.0,
-                   labFormat = labelFormat(transform = function(x) round(10^x))
+                   labFormat = labelFormat(transform = function(x) round(10^x)),
+                   title = 'Total Cases'
   )
 
-saveWidgetFix <- function (widget,file,...) {
-  ## A wrapper to saveWidget which compensates for arguable BUG in
-  ## saveWidget which requires `file` to be in current working
-  ## directory.
-  wd<-getwd()
-  on.exit(setwd(wd))
-  outDir<-dirname(file)
-  file<-basename(file)
-  setwd(outDir);
-  saveWidget(widget,file=file,...)
-}
-saveWidgetFix(leaf_map, file=paste0("Plots/mapcases",Sys.Date(),".html"))
+saveRDS(leaf_map, file="Plots/mapcases.rds")
 
 # --------- DEATHS
 
@@ -100,7 +91,8 @@ leaf_map_deaths = leaflet(agg,
   )  %>% addLegend(pal = pal,
                    values = ~log10(total_deaths),
                    opacity = 1.0,
-                   labFormat = labelFormat(transform = function(x) round(10^x))
+                   labFormat = labelFormat(transform = function(x) round(10^x)),
+                   title = 'Total Deaths'
   )
 
-saveWidgetFix(leaf_map_deaths, file=paste0("Plots/mapdeaths",Sys.Date(),".html"))
+saveRDS(leaf_map_deaths, file="Plots/mapdeaths.rds")

@@ -1,10 +1,12 @@
-name: covideda
+name: COVIDEDA
 title:
 username:
 account: lucha6
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 2725952
-bundleId: 3770704
-url: https://lucha6.shinyapps.io/covideda/
-when: 1603374212.50678
+appId: 3184979
+bundleId: 3832001
+url: https://lucha6.shinyapps.io/COVIDEDA/
+when: 1604773388.35488
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,223 @@
+---
+title: "Corona-virus Exploratory Data Analysis"
+author: "Luis Chaves"
+date: "`r paste(date(), Sys.timezone())"
+runtime: shiny
+output: 
+  html_document:
+    toc: true
+theme: united
+resource_files: 
+ - Plots/*.gif # gif are not in in-code blocks hence cannnot be found
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings = FALSE, message = FALSE)
+```
+
+```{r, warning = F, message = F}
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+library(utils)
+library(lubridate)
+library(htmlwidgets)
+library(crosstalk)
+library(shiny)
+LastRunTime = readRDS("ProcessedData/LastRunTime.rds")
+```
+
+# Introduction
+
+**Last updated:** `r LastRunTime` UK TIME
+
+Hello and thanks for visiting my page on COVID19 exploratory data analysis. I have made this site as a learning exercise but also to better understand the current state of the pandemic at multiple levels.
+
+There are many more plots and perspective I would like to exploit and that I am currently working on:
+
+* Bubble map over time and by exact location
+* Graph of the reproduction number (R0) over time
+* Graphs of the global statistics
+* Log10 switch for the amounts of people tested positive, dead or recovered
+* Give context and explanations to the graphics
+
+If you have any other suggestions please get in touch at [luis.chaves15@imperial.ac.uk](mailto:luis.chaves15@imperial.ac.uk).
+
+Data sources:
+
+* [Corona Virus dataset @ Kaggle](https://www.kaggle.com/sudalairajkumar/novel-corona-virus-2019-dataset)
+
+Some amazing resources:
+
+* [John Hopkins University dashboard](https://coronavirus.jhu.edu/map.html)
+* [SARS-COV2 phylogenetic tree](https://nextstrain.org/ncov)
+* [COVID19 scenario explorer](https://neherlab.org/covid19/)
+
+_**Disclaimer:**_ This is the first website project I get involved in so things may not work as smoothly as I would want them too! If you encounter the site being too laggy, do let me know! I am working to make it be smoother and take less time to load.
+
+_**Disclaimer 2:**_ The whole website is interactive! Have fun playing with the graphs!
+
+```{r LoadData}
+bar_over_time = readRDS("Plots/bar_over_time.rds")
+byevent = readRDS("Plots/byevent.rds")
+conf_daytime = readRDS("Plots/conf_daytime.rds")
+conf = readRDS("Plots/conf.rds")
+d_daytime = readRDS("Plots/d_daytime.rds")
+deads = readRDS("Plots/deads.rds")
+deaths_conf = readRDS("Plots/deaths_conf.rds")
+map_time = readRDS("Plots/map_time.rds")
+plt_act_time = readRDS("Plots/plt_act_time.rds")
+plt_conf_time = readRDS("Plots/plt_conf_time.rds")
+plt_deaths_time = readRDS("Plots/plt_deaths_time.rds")
+plt_rec_time = readRDS("Plots/plt_rec_time.rds")
+rec_conf = readRDS("Plots/rec_conf.rds")
+rec_daytime = readRDS("Plots/rec_daytime.rds")
+rec = readRDS("Plots/rec.rds")
+
+all_time = readRDS('ProcessedData/cleanTime.rds')
+```
+
+# Up-to-date numbers by continent and by country
+
+## Table view
+```{r}
+selectInput("table", label = "By",
+            choices = c("Continent", "Country","Full"), selected = "Country")
+```
+
+```{r warning = F, message = F}
+sum.table = readRDS("ProcessedData/sumtable.rds")
+continent.wise =  readRDS("ProcessedData/continentWise.rds")
+```
+
+```{r}
+renderTable(
+  switch(input$table,
+         "Country"=sum.table %>% head(20),
+         "Continent"=continent.wise,
+         "Full"=sum.table),
+  digits = 0
+)
+```
+
+## Up-to-date number of events by location
+
+```{r}
+selectInput("t.choice", label = "Event/Metric",
+            choices = c("Deaths(D)", "Recovered(R)","Confirmed(C)",
+                        "D/C ratio", "R/C ratio"), selected = "Deaths(D)")
+```
+
+```{r}
+ItalyDC = round(with(sum.table[sum.table$Country.Region == "Italy",], Deaths/Confirmed),4)*100
+GermanyDC = round(with(sum.table[sum.table$Country.Region == "Germany",], Deaths/Confirmed),4)*100
+```
+
+```{r}
+renderText(
+  if (input$t.choice=="D/C ratio"){
+    paste0("In this graph we can clearly see how the virus (and potentially different strains of the virus) are affecting every country. As of today, Italy has a case-fatality rate (CFR) of ", as.character(ItalyDC), "% where as Germany has a CFR of ", as.character(GermanyDC), "% suggesting the strain in Germany is way less deadly than the italian strain.")
+  }
+)
+```
+
+
+```{r}
+renderPlotly(
+  if (input$t.choice == "Deaths(D)"){
+    deads
+  } else if (input$t.choice == "Confirmed(C)") {
+    conf
+  } else if (input$t.choice == "Recovered(R)") {
+    rec
+  } else if (input$t.choice == "D/C ratio") {
+    deaths_conf
+  } else if (input$t.choice == "R/C ratio") {
+    rec_conf
+  }
+)
+```
+
+# COVID19 over time - Timelines
+
+## Cumulative number of events over time
+
+```{r}
+selectInput("plt.time.choice", label = "Event/Metric",
+            choices = c("Deaths(D)", "Recovered(R)",
+                        "Confirmed(C)", "Active(A)"), selected = 20)
+```
+
+```{r}
+renderPlotly(
+  if (input$plt.time.choice == "Deaths(D)"){
+    plt_deaths_time
+  } else if (input$plt.time.choice == "Confirmed(C)") {
+    plt_conf_time
+  } else if (input$plt.time.choice == "Recovered(R)") {
+    plt_rec_time
+  }  else if (input$plt.time.choice == "Active(A)") {
+    plt_act_time
+  }
+)
+```
+
+## Number of events per day over time
+
+The value for any day is the difference of the cumulative cases/deaths/recoveries for that day day and the day before then.
+
+```{r}
+selectInput("plt.day.choice", label = "Event/Metric",
+            choices = c("Deaths(D)", "Recovered(R)",
+                        "Confirmed(C)"), selected = 20)
+```
+
+
+```{r}
+renderPlotly(
+  if (input$plt.day.choice == "Deaths(D)"){
+    d_daytime
+  } else if (input$plt.day.choice == "Confirmed(C)") {
+    conf_daytime
+  } else if (input$plt.day.choice == "Recovered(R)") {
+    rec_daytime
+  }
+)
+```
+
+## Barplots over time
+
+Over time from `r format(min(all_time$Date),"%B %dnd")` to  `r format(max(all_time$Date),"%B %dnd")`
+
+```{r message = F}
+selectInput("barplot", label = "Type of barplot",
+            choices = c("Stacked bars", "By event"), selected = "Stacked bars")
+
+renderPlotly(
+  switch(input$barplot,
+         "Stacked bars" = bar_over_time,
+         "By event" = byevent)
+)
+```
+
+## Race plots
+
+### Confirmed cases
+![](Plots/confirmed.gif)
+
+### Deaths
+![](Plots/deaths.gif)
+
+### Recovered
+![](Plots/recovered.gif)
+
+
+# COVID19 over space - Maps
+
+
+```{r}
+map_time
+```
+
+
+
