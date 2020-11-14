@@ -44,6 +44,12 @@ jobs:
           source(scripts/line_plot_daily.R)
           source(scripts/maps.R)
         shell: Rscript {0}
+      - name: Connect to Shiny:
+        run: |
+          rsconnect::setAccountInfo(name='lucha6',
+          token='${{ secrets.SHINY_TOKEN }}',
+          secret='${{ secrets.SHINY_SECRET }}')
+        shell: Rscript {0}
       - name: Uploading to shinyapps.io
         run: rsconnect::deployDoc("COVIDEDA.Rmd", forceUpdate = getOption("rsconnect.force.update.apps", TRUE))
         shell: Rscript {0}
