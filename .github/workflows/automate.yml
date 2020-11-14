@@ -29,16 +29,28 @@ jobs:
         uses: r-lib/actions/setup-R@v1
         with:
           r-version: ${{ matrix.r-version }}
+
       - name: Setting up pandoc for Rmd docs
         uses: r-lib/actions/setup-pandoc@v1
+        
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: /Users/runner/work/_temp/Library
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           install.packages(c("rsconnect", "dplyr", "ggplot2", "tidyr", "leaflet", "plotly", "ezplot", "shiny", "rmarkdown"))
         shell: Rscript {0}
+        
       - name: Updating data and cleaning 
         run: |
           source('scripts/datacleaning.R')
         shell: Rscript {0}
+        
       - name: Running plots scripts
         run: |
           source('scripts/treemap.R')
@@ -46,6 +58,7 @@ jobs:
           source('scripts/line_plot_daily.R')
           source('scripts/maps.R')
         shell: Rscript {0}
+        
       - name: Connect to Shiny
         env: 
           SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
@@ -55,9 +68,11 @@ jobs:
           shiny_secret = Sys.getenv("SHINY_SECRET")
           rsconnect::setAccountInfo(name='lucha6', token=shiny_token, secret=shiny_secret)
         shell: Rscript {0}
+        
       - name: Uploading to shinyapps.io
         run: rsconnect::deployDoc("COVIDEDA.Rmd", forceUpdate = getOption("rsconnect.force.update.apps", TRUE))
         shell: Rscript {0}
+        
       - name: Commit new changes
         run: |
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
@@ -65,6 +80,7 @@ jobs:
           git add --all
           git pull origin ${{ github.head_ref }}
           git commit -am "AUTO-GH REFRESH: ${{ github.workflow }}"
+          
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
