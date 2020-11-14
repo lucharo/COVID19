@@ -38,10 +38,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-shinydoc
+          key: ${{ runner.os }}--shinydoc
           restore-keys: | 
-            ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-shinydoc
-            ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-
+            ${{ runner.os }}--shinydoc
             ${{ runner.os }}-
 
       - name: Install dependencies
