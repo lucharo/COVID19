@@ -18,10 +18,10 @@ on:
 
 jobs:
   build:
-    runs-on: Ubuntu
+    runs-on: macos-10.15
     strategy:
       matrix:
-        r-version: [3.6.2] 
+        r-version: [4.0.2] 
 
     steps:
       - uses: actions/checkout@v2
