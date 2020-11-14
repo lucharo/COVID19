@@ -17,7 +17,7 @@ on:
     - cron: '0 12 */3 * *'
 
 jobs:
-  ShinyDoc Update:
+  ShinyDoc-Update:
     runs-on: macos-10.15
     strategy:
       matrix:
