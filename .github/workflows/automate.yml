@@ -39,10 +39,10 @@ jobs:
         shell: Rscript {0}
       - name: Running plots scripts
         run: |
-          source(scripts/treemap.R)
-          source(scripts/line_plot_cumulative.R)
-          source(scripts/line_plot_daily.R)
-          source(scripts/maps.R)
+          source('scripts/treemap.R')
+          source('scripts/line_plot_cumulative.R')
+          source('scripts/line_plot_daily.R')
+          source('scripts/maps.R')
         shell: Rscript {0}
       - name: Connect to Shiny
         env: 
