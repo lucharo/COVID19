@@ -31,7 +31,7 @@ jobs:
           r-version: ${{ matrix.r-version }}
       - name: Install dependencies
         run: |
-          install.packages(c("rsconnect", "dplyr", "ggplot2", "tidyr", "leaflet", "plotly", "ezplot", "shiny", "naniar"))
+          install.packages(c("rsconnect", "dplyr", "ggplot2", "tidyr", "leaflet", "plotly", "ezplot", "shiny", "rmarkdown"))
         shell: Rscript {0}
       - name: Updating data and cleaning 
         run: |
