@@ -17,7 +17,7 @@ on:
     - cron: '0 12 */3 * *'
 
 jobs:
-  build:
+  ShinyDoc Update:
     runs-on: macos-10.15
     strategy:
       matrix:
@@ -29,6 +29,8 @@ jobs:
         uses: r-lib/actions/setup-R@v1
         with:
           r-version: ${{ matrix.r-version }}
+      - name: Setting up pandoc for Rmd docs
+        uses: r-lib/actions/setup-pandoc@v1
       - name: Install dependencies
         run: |
           install.packages(c("rsconnect", "dplyr", "ggplot2", "tidyr", "leaflet", "plotly", "ezplot", "shiny", "rmarkdown"))
