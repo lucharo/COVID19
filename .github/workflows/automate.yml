@@ -38,7 +38,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /Users/runner/work/_temp/Library
-          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-shinydoc
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -75,12 +75,13 @@ jobs:
         
       - name: Commit new changes
         run: |
+          git config --local core.autocrlf false
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
           git config --local user.name "${{ github.actor }}"
-          git add --all
-          git pull origin ${{ github.head_ref }}
-          git commit -am "AUTO-GH REFRESH: ${{ github.workflow }}"
-          
+          git add . && git add --renormalize .
+          git pull origin ${{ github.head_ref }} --autostash --rebase -X ours
+          git commit --allow-empty -am "AUTO-GH REFRESH: ${{ github.workflow }}"
+          NO_PAGER=1 git --no-pager diff HEAD^
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
