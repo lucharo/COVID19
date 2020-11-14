@@ -21,7 +21,7 @@ jobs:
     runs-on: Ubuntu
     strategy:
       matrix:
-        r-version: [4.0.2] 
+        r-version: [3.6.2] 
 
     steps:
       - uses: actions/checkout@v2
