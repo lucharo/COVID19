@@ -1,0 +1,61 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+#
+# See https://github.com/r-lib/actions/tree/master/examples#readme for
+# additional example workflows available for the R community.
+
+name: R
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 12 */3 * *'
+
+jobs:
+  build:
+    runs-on: Ubuntu
+    strategy:
+      matrix:
+        r-version: 4.0
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up R ${{ matrix.r-version }}
+        uses: r-lib/actions/setup-R@v1
+        with:
+          r-version: ${{ matrix.r-version }}
+      - name: Install dependencies
+        run: |
+          install.packages(c("rsconnect", "dplyr", "ggplot2", "tidyr", "leaflet", "plotly", "ezplot", "shiny", "naniar"))
+        shell: Rscript {0}
+      - name: Updating data and cleaning 
+        run: |
+          source('scripts/datacleaning.R')
+        shell: Rscript {0}
+      - name: Running plots scripts
+        run: |
+          source(scripts/treemap.R)
+          source(scripts/line_plot_cumulative.R)
+          source(scripts/line_plot_daily.R)
+          source(scripts/maps.R)
+        shell: Rscript {0}
+      - name: Uploading to shinyapps.io
+        run: rsconnect::deployDoc("COVIDEDA.Rmd", forceUpdate = getOption("rsconnect.force.update.apps", TRUE))
+        shell: Rscript {0}
+      - name: Commit new changes
+        run: |
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git add --all
+          git pull origin ${{ github.head_ref }}
+          git commit -am "AUTO-GH REFRESH: ${{ github.workflow }}"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: ${{ github.head_ref }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
