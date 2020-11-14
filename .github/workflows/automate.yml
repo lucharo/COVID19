@@ -44,7 +44,7 @@ jobs:
           source(scripts/line_plot_daily.R)
           source(scripts/maps.R)
         shell: Rscript {0}
-      - name: Connect to Shiny:
+      - name: Connect to Shiny
         run: |
           rsconnect::setAccountInfo(name='lucha6',
           token='${{ secrets.SHINY_TOKEN }}',
