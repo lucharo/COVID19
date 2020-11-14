@@ -21,7 +21,7 @@ jobs:
     runs-on: Ubuntu
     strategy:
       matrix:
-        r-version: 4.0
+        r-version: [4.0.2] 
 
     steps:
       - uses: actions/checkout@v2
@@ -45,10 +45,13 @@ jobs:
           source(scripts/maps.R)
         shell: Rscript {0}
       - name: Connect to Shiny
+        env: 
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
         run: |
-          rsconnect::setAccountInfo(name='lucha6',
-          token='${{ secrets.SHINY_TOKEN }}',
-          secret='${{ secrets.SHINY_SECRET }}')
+          shiny_token = Sys.getenv("SHINY_TOKEN")
+          shiny_secret = Sys.getenv("SHINY_SECRET")
+          rsconnect::setAccountInfo(name='lucha6', token=shiny_token, secret=shiny_secret)
         shell: Rscript {0}
       - name: Uploading to shinyapps.io
         run: rsconnect::deployDoc("COVIDEDA.Rmd", forceUpdate = getOption("rsconnect.force.update.apps", TRUE))
