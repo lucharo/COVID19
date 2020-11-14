@@ -1,7 +1,7 @@
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(leaflet))
 library(ezplot) ## for nice and easy to read big numbers (millions) etc)
-library(htmlwidgets)
+
 
 ## load data
 cumulative = readRDS("ProcessedData/cumulative.rds")
