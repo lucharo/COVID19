@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Set up R ${{ matrix.r-version }}
         uses: r-lib/actions/setup-R@v1
         with:
@@ -78,14 +80,11 @@ jobs:
         
       - name: Commit new changes
         run: |
-          git config --local core.autocrlf false
           git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-          git config --local user.name "${{ github.actor }}"
-          git add . && git add --renormalize .
-          git commit --allow-empty -am "AUTO-GH REFRESH: ${{ github.workflow }}"
-          NO_PAGER=1 git --no-pager diff HEAD^
+          git config --local user.name "Github Action"
+          git commit -m "Doc Update [AUTO]" -a
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          branch: ${{ github.head_ref }}
+          branch: ${{ github.ref }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
