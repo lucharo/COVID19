@@ -40,9 +40,8 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}--shinydoc
-          restore-keys: | 
-            ${{ runner.os }}--shinydoc
+          key: ${{ runner.os }}-shinydoc
+          restore-keys: |
             ${{ runner.os }}-
 
       - name: Install dependencies
