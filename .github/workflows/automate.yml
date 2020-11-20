@@ -77,14 +77,14 @@ jobs:
         run: rsconnect::deployDoc("COVIDEDA.Rmd", forceUpdate = getOption("rsconnect.force.update.apps", TRUE))
         shell: Rscript {0}
         
-      - name: Commit new changes
-        run: |
-          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
-          git config --local user.name "Github Action"
-          git pull origin ${{ github.ref }} --autostash --rebase -X ours
-          git commit -m "Doc Update [AUTO]" -a
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          branch: ${{ github.ref }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Commit new changes
+#        run: |
+#          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+#          git config --local user.name "Github Action"
+#          git pull origin ${{ github.ref }} --autostash --rebase -X ours
+#          git commit -m "Doc Update [AUTO]" -a
+#      - name: Push changes
+#        uses: ad-m/github-push-action@master
+#        with:
+#          branch: ${{ github.ref }}
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
