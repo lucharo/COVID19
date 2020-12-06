@@ -65,8 +65,8 @@ jobs:
         
       - name: Connect to Shiny
         env:
-          SHINY_TOKEN = ${{ secrets.SHINY_TOKEN }}
-          SHINY_SECRET = ${{ secrets.SHINY_SECRET }}
+          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
+          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
         run: |
           print(Sys.getenv())
           shiny_token = Sys.getenv("SHINY_TOKEN")
