@@ -35,12 +35,12 @@ jobs:
         
       - name: Cache R packages
         id: cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-shinydoc
+          key: ${{ runner.os }}-shinydoc1
           restore-keys: |
-            ${{ runner.os }}-
+            ${{ runner.os }}-1
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit == 'true'
