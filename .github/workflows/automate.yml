@@ -43,7 +43,7 @@ jobs:
             ${{ runner.os }}-1
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit == 'true'
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           install.packages(c("rsconnect", "dplyr", "ggplot2",
           "tidyr", "leaflet", "plotly", "ezplot",
