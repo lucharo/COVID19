@@ -43,11 +43,12 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dependencies
-        #if: steps.cache.outputs.cache-hit == 'true'
+        if: steps.cache.outputs.cache-hit == 'true'
         run: |
-          Rscript -e 'install.packages(c("rsconnect", "dplyr", "ggplot2",
+          install.packages(c("rsconnect", "dplyr", "ggplot2",
           "tidyr", "leaflet", "plotly", "ezplot",
-          "shiny", "rmarkdown"))'
+          "shiny", "rmarkdown"))
+        shell: Rscript {0}
         
       - name: Updating data and cleaning 
         run: |
@@ -63,12 +64,9 @@ jobs:
         shell: Rscript {0}
         
       - name: Connect to Shiny
-        env: 
-          SHINY_TOKEN: ${{ secrets.SHINY_TOKEN }}
-          SHINY_SECRET: ${{ secrets.SHINY_SECRET }}
         run: |
-          shiny_token = Sys.getenv("SHINY_TOKEN")
-          shiny_secret = Sys.getenv("SHINY_SECRET")
+          shiny_token = ${{ secrets.SHINY_TOKEN }}
+          shiny_secret = ${{ secrets.SHINY_SECRET }}
           rsconnect::setAccountInfo(name='lucha6', token=shiny_token, secret=shiny_secret)
         shell: Rscript {0}
         
