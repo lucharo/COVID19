@@ -71,6 +71,7 @@ jobs:
           print(Sys.getenv())
           shiny_token = Sys.getenv("SHINY_TOKEN")
           shiny_secret = Sys.getenv("SHINY_SECRET") 
+          print(shiny_token)
           rsconnect::setAccountInfo(name='lucha6', token=shiny_token, secret=shiny_secret)
         shell: Rscript {0}
         
