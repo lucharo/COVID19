@@ -14,7 +14,9 @@ cumulative = readRDS('ProcessedData/cumulative.rds')
 ## We also remove the `iso_code` and `date` column as the other
 ## two datasets won't have those
 
-latest = max(cumulative$date)
+## Better to always take the day before the latest as most
+# data will be available like that
+latest = max(cumulative$date) - 1
 
 ## line below puts date in readable format: MonthName DayNumber, Year
 formatted_date = format(latest, format="%B %d, %Y")
